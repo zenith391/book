@@ -139,7 +139,7 @@
 	<header id="title-block-header">
 	<h1 class="title">Discovering The Zig Programming Language</h1>
 	<p class="author">zenith391</p>
-	<p class="date">Last edited on 22-01-17 20:34:21+00:00</p>
+	<p class="date">Last edited on 22-01-17 20:59:08+00:00</p>
 	</header>
 	<nav id="TOC" role="doc-toc">
 <ul>
@@ -585,36 +585,79 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="at">const</span> allocator = gpa.allocator();</span></code></pre></div>
 <p>Here we have to keep <code>gpa</code> as it’s the variable that will store the allocator’s state, and then <code>allocator</code> is the interface we can use. The general purpose allocator is, as its name implies, general purpose, so it should go for most of your programs, it also detects common memory errors (leaks, use-after-free, double free…)</p>
 <h3 id="application-a-list-of-grades">Application: a list of grades</h3>
-<p>To apply our newly earned knowledge, we can code a simple yet useful program, computing the average of your numerical grades:</p>
+<p>To apply our newly earned knowledge, we can code a simple yet useful program, computing the average of your numerical grades</p>
+<p>We start by setting up the allocator and the reader:</p>
 <div class="sourceCode" id="cb41"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true"></a><span class="at">const</span> std = <span class="bu">@import</span>(<span class="st">&quot;std&quot;</span>);</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true"></a></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> main() !<span class="dt">void</span> {</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true"></a>    </span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true"></a>}</span></code></pre></div>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true"></a>    <span class="kw">var</span> gpa = std.heap.GeneralPurposeAllocator(.{}) {};</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true"></a>    <span class="at">const</span> allocator = gpa.allocator();</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true"></a>    <span class="at">const</span> reader = std.io.getStdIn().reader();</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true"></a>}</span></code></pre></div>
+<p>Then, in order to collect all grades, we’re gonna use an <a href="https://github.com/ziglang/zig/blob/master/lib/std/array_list.zig#L17">ArrayList</a> and start a loop:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true"></a><span class="kw">var</span> gpa = std.heap.GeneralPurposeAllocator(.{}) {};</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true"></a><span class="at">const</span> allocator = gpa.allocator();</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true"></a><span class="at">const</span> reader = std.io.getStdIn().reader();</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true"></a></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true"></a><span class="kw">var</span> grades = std.ArrayList(<span class="dt">f32</span>).init(allocator);</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true"></a><span class="cf">defer</span> grades.deinit();</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true"></a><span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true"></a></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true"></a>}</span></code></pre></div>
+<p><code>defer grades.deinit();</code> is a kind of statement that is very often used in Zig. It means that at the end of the current block (usually a function or loop) it will call <code>grades.deinit()</code>. And <code>grades.deinit()</code> will free all the memory used up by the array list.</p>
+<p>Next, we use <a href="https://github.com/ziglang/zig/blob/master/lib/std/io/reader.zig#L124"><code>reader.readUntilDelimiterAlloc</code></a> to read a line of text from the input and then we parse it as a float if it isn’t empty. Finally we just do the sum of all grades and divide it by the number of grades to get the average.</p>
+<p>Here is the full example (<a href="examples/grade2.zig">grade2.zig</a>)</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true"></a><span class="at">const</span> std = <span class="bu">@import</span>(<span class="st">&quot;std&quot;</span>);</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> main() !<span class="dt">void</span> {</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true"></a>    <span class="kw">var</span> gpa = std.heap.GeneralPurposeAllocator(.{}) {};</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true"></a>    <span class="at">const</span> allocator = gpa.allocator();</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true"></a>    <span class="at">const</span> reader = std.io.getStdIn().reader();</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true"></a></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true"></a>    <span class="kw">var</span> grades = std.ArrayList(<span class="dt">f32</span>).init(allocator);</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true"></a>    <span class="cf">defer</span> grades.deinit();</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true"></a>    <span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true"></a>        std.debug.print(<span class="st">&quot;Enter a grade: &quot;</span>, .{});</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true"></a>        <span class="at">const</span> line = <span class="cf">try</span> reader.readUntilDelimiterAlloc(allocator, <span class="ch">&#39;\n&#39;</span>, std.math.maxInt(<span class="dt">usize</span>));</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true"></a>        <span class="cf">if</span> (std.mem.eql(<span class="dt">u8</span>, line, <span class="st">&quot;&quot;</span>)) { <span class="co">// empty line means we stop entering grades</span></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true"></a>            <span class="cf">break</span>;</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true"></a>        } <span class="cf">else</span> {</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true"></a>            <span class="at">const</span> number = <span class="cf">try</span> std.fmt.parseFloat(<span class="dt">f32</span>, line);</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true"></a>            <span class="cf">try</span> grades.append(number);</span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true"></a>        }</span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true"></a>    }</span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true"></a></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true"></a>    <span class="kw">var</span> sum: <span class="dt">f32</span> = <span class="dv">0</span>; <span class="co">// add all the grades</span></span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true"></a>    <span class="cf">for</span> (grades.items) |grade| {</span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true"></a>        sum += grade;</span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true"></a>    }</span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true"></a>    <span class="at">const</span> average = sum / <span class="bu">@intToFloat</span>(<span class="dt">f32</span>, grades.items.len); <span class="co">// and divide by the number of grades</span></span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true"></a>    std.debug.print(<span class="st">&quot;Your average is {d}</span><span class="sc">\n</span><span class="st">&quot;</span>, .{ average });</span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true"></a>}</span></code></pre></div>
 <h3 id="example-handling-an-image">Example: Handling an image</h3>
 <p>Being able to handle images is very important for making an image editor (from MS Paint to Photoshop) or using them in an image viewer, a video game, etc.</p>
 <p>A key property of an image is it’s size, which is defined with a width and an height measured in pixels.</p>
 <p>[200x100 image] legend: this is a 200x100 image</p>
 <p>Images are (usually) made of <a href="https://en.wikipedia.org/wiki/RGB_color_model">RGB</a> pixels coded on 24 bits.</p>
 <p>For that we can use many concepts we saw earlier, first let’s start small and define a pixel:</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true"></a><span class="at">const</span> Rgba = <span class="at">packed</span> <span class="kw">struct</span> {</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true"></a>    red: <span class="dt">u8</span>,</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true"></a>    green: <span class="dt">u8</span>,</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true"></a>    blue: <span class="dt">u8</span>,</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true"></a></span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true"></a>    <span class="co">/// Transparency</span></span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true"></a>    alpha: <span class="dt">u8</span></span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true"></a>};</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true"></a><span class="at">const</span> Rgba = <span class="at">packed</span> <span class="kw">struct</span> {</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true"></a>    red: <span class="dt">u8</span>,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true"></a>    green: <span class="dt">u8</span>,</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true"></a>    blue: <span class="dt">u8</span>,</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true"></a></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true"></a>    <span class="co">/// Transparency</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true"></a>    alpha: <span class="dt">u8</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true"></a>};</span></code></pre></div>
 <p><code>packed struct</code> means that we define a struct that will have this precise bit-layout. If we just said <code>struct</code>, Zig might have moved the bits and fields around.</p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true"></a><span class="at">const</span> Image = <span class="kw">struct</span> {</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true"></a>    pixels: []Rgba,</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true"></a></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true"></a>    <span class="kw">pub</span> <span class="kw">fn</span> new(allocator: *std.mem.Allocator, width: <span class="dt">usize</span>, height: <span class="dt">usize</span>) !Image {</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true"></a>        <span class="at">const</span> pixels = <span class="cf">try</span> allocator.alloc(Rgba, width * height);</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true"></a>        <span class="cf">return</span> Image { .pixels = pixels };</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true"></a>    }</span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true"></a></span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true"></a><span class="at">const</span> Image = <span class="kw">struct</span> {</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true"></a>    pixels: []Rgba,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true"></a>    <span class="kw">pub</span> <span class="kw">fn</span> new(allocator: *std.mem.Allocator, width: <span class="dt">usize</span>, height: <span class="dt">usize</span>) !Image {</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true"></a>        <span class="at">const</span> pixels = <span class="cf">try</span> allocator.alloc(Rgba, width * height);</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true"></a>        <span class="cf">return</span> Image { .pixels = pixels };</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true"></a>    }</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true"></a></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true"></a>}</span></code></pre></div>
 <p>Here we use a new integer type, <code>usize</code> which is 32-bit on a 32-bit machine and 64-bit on a 64-bit machine. It is actually an integer the size of a pointer (in fact, <code>@ptrToInt</code> returns an <code>usize</code>).</p>
 <p><code>[]Rgb</code> is a slice of RGB colors and this is where slices come handy, because we don’t know what will be the width or height of the image we will create, and we wouldn’t want to force the user to always use images with a specific size! So we use a slice which also allows safety-checked arbitrary sizes.</p>
 <p>Next we simply allocate <code>width * height</code> RGB pixels and use it for our <code>Image</code> struct and voilà.</p>
@@ -640,131 +683,131 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <p>As you know, in Zig every variable has an unchangeable type that is kept throughout its whole lifetime. For example when declaring <code>const a: u32 = 0</code>, <code>u32</code> is the variable’s type.</p>
 <p>Now the new thing is that the type of <code>u32</code> would simply be <code>type</code>, type of <code>f64</code> would also be <code>type</code>, etc.</p>
 <p>In practice, this means that we can store types in constants:</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true"></a><span class="at">const</span> MyFavouriteInteger = <span class="dt">u32</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true"></a><span class="at">const</span> MyFavouriteInteger = <span class="dt">u32</span>;</span></code></pre></div>
 <p>The only constraint is that it MUST be known at compile time. This means the below code would NOT work:</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true"></a><span class="kw">var</span> someValue = computeThings();</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true"></a><span class="kw">var</span> MyType: ?<span class="dt">type</span> = <span class="kw">null</span>;</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true"></a></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true"></a><span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) {</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true"></a>    MyType = <span class="dt">u32</span>;</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true"></a>} <span class="cf">else</span> {</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true"></a>    MyType = <span class="dt">bool</span>;</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true"></a><span class="kw">var</span> someValue = computeThings();</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true"></a><span class="kw">var</span> MyType: ?<span class="dt">type</span> = <span class="kw">null</span>;</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true"></a></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true"></a><span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) {</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true"></a>    MyType = <span class="dt">u32</span>;</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true"></a>} <span class="cf">else</span> {</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true"></a>    MyType = <span class="dt">bool</span>;</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true"></a>}</span></code></pre></div>
 <p>However, we can make it depend on compile-time known values:</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true"></a><span class="at">const</span> someValue = <span class="dv">5</span>;</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) <span class="dt">u32</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true"></a>    <span class="cf">else</span> <span class="dt">bool</span>;</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true"></a></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true"></a><span class="kw">var</span> someVariable: MyType = <span class="kw">undefined</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true"></a><span class="at">const</span> someValue = <span class="dv">5</span>;</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) <span class="dt">u32</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true"></a>    <span class="cf">else</span> <span class="dt">bool</span>;</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true"></a></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true"></a><span class="kw">var</span> someVariable: MyType = <span class="kw">undefined</span>;</span></code></pre></div>
 <p>Here, <code>someValue</code> is known to be 5 at compile-time, so the compiler replaces</p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) <span class="dt">u32</span></span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true"></a>    <span class="cf">else</span> <span class="dt">bool</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="cf">if</span> (someValue &lt; <span class="dv">10</span>) <span class="dt">u32</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true"></a>    <span class="cf">else</span> <span class="dt">bool</span>;</span></code></pre></div>
 <p>with</p>
-<div class="sourceCode" id="cb48"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="dt">u32</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb50"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true"></a><span class="at">const</span> MyType = <span class="dt">u32</span>;</span></code></pre></div>
 <p>and so <code>someVariable</code> will be a <code>u32</code>.</p>
 <p>And then it can be used like anything else!</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true"></a><span class="kw">var</span> someInt: MyType = <span class="dv">5</span>; <span class="co">// this will be a &#39;u32&#39; variable</span></span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true"></a><span class="kw">var</span> someInt: MyType = <span class="dv">5</span>; <span class="co">// this will be a &#39;u32&#39; variable</span></span></code></pre></div>
 <h2 id="you-can-execute-functions-at-compile-time">You can execute functions at compile-time</h2>
 <div class="box-information">
 <p>For short, you can say comptime instead of compile-time.</p>
 </div>
 <p>The second concept is that functions can be executed at compile-time as long as its arguments are known during comptime. If it’s the case we can just add <code>comptime</code> to the function call:</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true"></a><span class="kw">fn</span> factorial(x: <span class="dt">u32</span>) <span class="dt">u32</span> {</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true"></a>    <span class="cf">if</span> (x == <span class="dv">0</span>) <span class="cf">return</span> <span class="dv">1</span>;</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true"></a>    <span class="cf">return</span> x * factorial(x - <span class="dv">1</span>);</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true"></a>}</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true"></a></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(<span class="dv">5</span>);</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true"></a><span class="cf">if</span> (result != <span class="dv">120</span>) {</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true"></a>    <span class="bu">@compileError</span>(<span class="st">&quot;Mathematics just broke.&quot;</span>);</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb52"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true"></a><span class="kw">fn</span> factorial(x: <span class="dt">u32</span>) <span class="dt">u32</span> {</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true"></a>    <span class="cf">if</span> (x == <span class="dv">0</span>) <span class="cf">return</span> <span class="dv">1</span>;</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true"></a>    <span class="cf">return</span> x * factorial(x - <span class="dv">1</span>);</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true"></a>}</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true"></a></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(<span class="dv">5</span>);</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true"></a><span class="cf">if</span> (result != <span class="dv">120</span>) {</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true"></a>    <span class="bu">@compileError</span>(<span class="st">&quot;Mathematics just broke.&quot;</span>);</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true"></a>}</span></code></pre></div>
 <p>Here, as we explicitely said to execute it at compile-time using <code>comptime</code>, the <code>factorial</code> is executed during compilation. If we remove <code>comptime</code>, it would still be executed at compile-time if the compiler finds it’s necessary.</p>
 <p>What this means in practice is that in the final executable, there won’t be any code for computing the <a href="https://en.wikipedia.org/wiki/Factorial">factorial</a> of 5, instead it will be like if we replaced</p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(<span class="dv">5</span>);</span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(<span class="dv">5</span>);</span></code></pre></div>
 <p>with</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="dv">120</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="dv">120</span>;</span></code></pre></div>
 <p>The major difference is that we keep the convenience of calling <code>factorial</code> so we explicitely know it’s <code>factorial(5)</code> and not some magic <code>120</code> value.</p>
 <p>This also means if one day we want to change the value, it’s much easier. For small things like that it might not matter much, but this feature can be extended to generate <strong>entire images</strong> in compile-time, and there it’s much better to easily tweak parameters.</p>
 <p>Another interesting part is</p>
-<div class="sourceCode" id="cb53"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true"></a><span class="cf">if</span> (result != <span class="dv">120</span>) {</span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true"></a>    <span class="bu">@compileError</span>(<span class="st">&quot;Mathematics just broke.&quot;</span>);</span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true"></a><span class="cf">if</span> (result != <span class="dv">120</span>) {</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true"></a>    <span class="bu">@compileError</span>(<span class="st">&quot;Mathematics just broke.&quot;</span>);</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true"></a>}</span></code></pre></div>
 <p>Now this simply means that if factorial of 5 is not equals to 120, we make a compile error.</p>
 <p>Also, given the value only needs to be known at comptime, we can do something like</p>
-<div class="sourceCode" id="cb54"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(factorial(<span class="dv">3</span>));</span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="at">comptime</span> factorial(factorial(<span class="dv">3</span>));</span></code></pre></div>
 <p>This will find that factorial(3) = 6 and that factorial(6) = 720, so this will be replaced with</p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="dv">720</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb57"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true"></a><span class="at">const</span> result = <span class="dv">720</span>;</span></code></pre></div>
 <p>Something as simple as that would better be replaced with Zig testing (coming soon chapter) but there are major cases where it can be used:</p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true"></a><span class="at">const</span> builtin = <span class="bu">@import</span>(<span class="st">&quot;builtin&quot;</span>);</span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true"></a></span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true"></a><span class="kw">fn</span> doSomeAppleThing() <span class="dt">void</span> {</span>
-<span id="cb56-4"><a href="#cb56-4" aria-hidden="true"></a>    <span class="cf">if</span> (!builtin.os.isDarwin()) {</span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true"></a>        <span class="bu">@compileError</span>(<span class="st">&quot;You&#39;re not compiling for Apple platform &gt;_&lt;&quot;</span>);</span>
-<span id="cb56-6"><a href="#cb56-6" aria-hidden="true"></a>    }</span>
-<span id="cb56-7"><a href="#cb56-7" aria-hidden="true"></a>    <span class="co">// we can now be bare Metal, pun intended</span></span>
-<span id="cb56-8"><a href="#cb56-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true"></a><span class="at">const</span> builtin = <span class="bu">@import</span>(<span class="st">&quot;builtin&quot;</span>);</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true"></a><span class="kw">fn</span> doSomeAppleThing() <span class="dt">void</span> {</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true"></a>    <span class="cf">if</span> (!builtin.os.isDarwin()) {</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true"></a>        <span class="bu">@compileError</span>(<span class="st">&quot;You&#39;re not compiling for Apple platform &gt;_&lt;&quot;</span>);</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true"></a>    }</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true"></a>    <span class="co">// we can now be bare Metal, pun intended</span></span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true"></a>}</span></code></pre></div>
 <p>If we call this function and try to compile the program for Windows, the compiler will show an error: You’re not compiling for Apple platform &gt;_&lt;</p>
 <p>What’s happening is that we called the <code>isDarwin()</code> function (which returns false if if we’re not compiling for iOS, macOS, and others) and we were able to make a compile error out of it.</p>
 <p>When defining a function, you might also want to declare a parameter as <code>comptime</code>, this as the effect to force the parameter to be known at compile-time, and if it is not possible, the compiler will simply output an error.</p>
 <h2 id="what-can-be-done-with-it">What can be done with it</h2>
 <p>From all the above points, we can easily make something like this:</p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> MyType(<span class="at">comptime</span> OtherType: <span class="dt">type</span>) <span class="dt">type</span> {</span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> returnValue(value: OtherType) OtherType {</span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true"></a>            <span class="cf">return</span> value;</span>
-<span id="cb57-5"><a href="#cb57-5" aria-hidden="true"></a>        }</span>
-<span id="cb57-6"><a href="#cb57-6" aria-hidden="true"></a>    }</span>
-<span id="cb57-7"><a href="#cb57-7" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> MyType(<span class="at">comptime</span> OtherType: <span class="dt">type</span>) <span class="dt">type</span> {</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> returnValue(value: OtherType) OtherType {</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true"></a>            <span class="cf">return</span> value;</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true"></a>        }</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true"></a>    }</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true"></a>}</span></code></pre></div>
 <p>Admitedly, this <code>returnValue</code> function is not very useful, but the above code already shows quite a few things:</p>
 <ul>
 <li>We defined a function <code>MyType</code> that takes a <code>type</code> as input and returns another <code>type</code>. The type we take as argument can be anything, and we return a struct from the function.</li>
 <li>We can use <code>OtherType</code> argument like an <code>u32</code>, an <code>f64</code>, those are types and so is <code>OtherType</code> !</li>
 </ul>
 <p>We can make something more useful, like a basic list:</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> List(<span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">type</span> {</span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true"></a>        items: []T,</span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true"></a></span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true"></a>        <span class="at">const</span> Self = <span class="bu">@This</span>();</span>
-<span id="cb58-6"><a href="#cb58-6" aria-hidden="true"></a></span>
-<span id="cb58-7"><a href="#cb58-7" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> get(self: *Self, index: <span class="dt">usize</span>) T {</span>
-<span id="cb58-8"><a href="#cb58-8" aria-hidden="true"></a>            <span class="cf">return</span> self.items[index];</span>
-<span id="cb58-9"><a href="#cb58-9" aria-hidden="true"></a>        }</span>
-<span id="cb58-10"><a href="#cb58-10" aria-hidden="true"></a>    }</span>
-<span id="cb58-11"><a href="#cb58-11" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> List(<span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">type</span> {</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true"></a>        items: []T,</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true"></a></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true"></a>        <span class="at">const</span> Self = <span class="bu">@This</span>();</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true"></a></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> get(self: *Self, index: <span class="dt">usize</span>) T {</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true"></a>            <span class="cf">return</span> self.items[index];</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true"></a>        }</span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true"></a>    }</span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true"></a>}</span></code></pre></div>
 <p>As said above, we can use our type parameter (which here is named <code>T</code>) as any other type, so we use it to declare a field <code>items: []T</code>. The <code>get</code> function is also simple. What’s worth noting is the <code>@This()</code>. It simply returns the type we’re in. As can be seen, we’re making a struct type, so <code>@This()</code> references the struct type. For example, you can think of <code>const Self = @This()</code> as <code>const Self = List(T)</code>.</p>
 <p>Then using allocators you saw in the ‘More Memory’ chapter, we can make a simple array list:</p>
-<div class="sourceCode" id="cb59"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> ArrayList(<span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">type</span> {</span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true"></a>        items: []T,</span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true"></a>        allocator: *Allocator,</span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true"></a></span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true"></a>        <span class="at">const</span> Self = <span class="bu">@This</span>();</span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true"></a></span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> append(self: *Self, value: T) !<span class="dt">void</span> {</span>
-<span id="cb59-9"><a href="#cb59-9" aria-hidden="true"></a>            <span class="co">// We expand our item list</span></span>
-<span id="cb59-10"><a href="#cb59-10" aria-hidden="true"></a>            self.items = <span class="cf">try</span> self.allocator.realloc(items, items.len + <span class="dv">1</span>);</span>
-<span id="cb59-11"><a href="#cb59-11" aria-hidden="true"></a></span>
-<span id="cb59-12"><a href="#cb59-12" aria-hidden="true"></a>            <span class="co">// And we set the newly allocated space to the new value</span></span>
-<span id="cb59-13"><a href="#cb59-13" aria-hidden="true"></a>            self.items[self.items.len - <span class="dv">1</span>] = value;</span>
-<span id="cb59-14"><a href="#cb59-14" aria-hidden="true"></a>        }</span>
-<span id="cb59-15"><a href="#cb59-15" aria-hidden="true"></a>    };</span>
-<span id="cb59-16"><a href="#cb59-16" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> ArrayList(<span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">type</span> {</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="kw">struct</span> {</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true"></a>        items: []T,</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true"></a>        allocator: *Allocator,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true"></a></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true"></a>        <span class="at">const</span> Self = <span class="bu">@This</span>();</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true"></a></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true"></a>        <span class="kw">pub</span> <span class="kw">fn</span> append(self: *Self, value: T) !<span class="dt">void</span> {</span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true"></a>            <span class="co">// We expand our item list</span></span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true"></a>            self.items = <span class="cf">try</span> self.allocator.realloc(items, items.len + <span class="dv">1</span>);</span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true"></a></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true"></a>            <span class="co">// And we set the newly allocated space to the new value</span></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true"></a>            self.items[self.items.len - <span class="dv">1</span>] = value;</span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true"></a>        }</span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true"></a>    };</span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true"></a>}</span></code></pre></div>
 <p>And we can add an init function to make it easier to use:</p>
-<div class="sourceCode" id="cb60"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> init(allocator: *Allocator) Self {</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true"></a>    <span class="cf">return</span> Self {</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true"></a>        .allocator = allocator,</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true"></a>        .items = allocator.alloc(T, <span class="dv">0</span>) <span class="cf">catch</span> <span class="cf">unreachable</span> <span class="co">// can&#39;t fail as we&#39;re literally allocating no memory</span></span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true"></a>    }</span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb62"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> init(allocator: *Allocator) Self {</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true"></a>    <span class="cf">return</span> Self {</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true"></a>        .allocator = allocator,</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true"></a>        .items = allocator.alloc(T, <span class="dv">0</span>) <span class="cf">catch</span> <span class="cf">unreachable</span> <span class="co">// can&#39;t fail as we&#39;re literally allocating no memory</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true"></a>    }</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true"></a>}</span></code></pre></div>
 <p>And like this, we can use it as any other type:</p>
-<div class="sourceCode" id="cb61"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true"></a><span class="kw">var</span> list = ArrayList(<span class="dt">f64</span>).init(allocator);</span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true"></a><span class="cf">try</span> list.append(<span class="fl">6.3</span>);</span></code></pre></div>
+<div class="sourceCode" id="cb63"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true"></a><span class="kw">var</span> list = ArrayList(<span class="dt">f64</span>).init(allocator);</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true"></a><span class="cf">try</span> list.append(<span class="fl">6.3</span>);</span></code></pre></div>
 <p>We can even put the result in a constant:</p>
-<div class="sourceCode" id="cb62"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true"></a><span class="at">const</span> MyList = ArrayList(<span class="dt">f64</span>);</span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true"></a></span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true"></a><span class="kw">var</span> list = MyList.init(allocator);</span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true"></a><span class="cf">try</span> list.append(<span class="fl">6.3</span>);</span></code></pre></div>
+<div class="sourceCode" id="cb64"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true"></a><span class="at">const</span> MyList = ArrayList(<span class="dt">f64</span>);</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true"></a><span class="kw">var</span> list = MyList.init(allocator);</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true"></a><span class="cf">try</span> list.append(<span class="fl">6.3</span>);</span></code></pre></div>
 <p>Of course, this list could be made much better, but it’s great as an overview of how “generics” like <code>std.ArrayList</code> and other types actually work.</p>
 <p><code>type</code>, <code>anytype</code>, …</p>
 <h2 id="huge-practical-example-coding-an-operation-parser">(Huge) Practical example: coding an operation parser</h2>
@@ -772,8 +815,8 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <p>Now the task we’re gonna do is complicated and hard to think about, but the day you fully understand that, you know the power of compile-time code execution.</p>
 <p>As we know, <code>std.fmt.format</code> parses the format string at compile-time, so here we can take a try at extending the language using comptime !</p>
 <p>Our end goal is being able to write something like</p>
-<div class="sourceCode" id="cb63"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true"></a>operload(<span class="st">&quot;a + ( b * ( normalize c + d ) )&quot;</span>,</span>
-<span id="cb63-2"><a href="#cb63-2" aria-hidden="true"></a>    .{ .a = a, .b = b, .c = c, .d = d });</span></code></pre></div>
+<div class="sourceCode" id="cb65"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true"></a>operload(<span class="st">&quot;a + ( b * ( normalize c + d ) )&quot;</span>,</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true"></a>    .{ .a = a, .b = b, .c = c, .d = d });</span></code></pre></div>
 <p>For simplicity, we will not take care of operator precedence (the fact that we do multiplications first and then we do additions) to make parsing simpler given it’s not the main topic here.</p>
 <p>We can quickly devise a parser where the root node is an Expression.</p>
 <p>An expression can be either an unary operation (like <code>normalize c</code>) or a binary operation (like <code>a + ( b * ... )</code>).</p>
@@ -784,49 +827,49 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 </ul>
 <p>We’ll also store a list of comptime</p>
 <p>So we can start coding,</p>
-<div class="sourceCode" id="cb64"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true"></a><span class="co">// for now, we will assume the end result is a Vector3</span></span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true"></a></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb66"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true"></a><span class="co">// for now, we will assume the end result is a Vector3</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true"></a></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true"></a>}</span></code></pre></div>
 <p>First we’ll start by splitting our input word by word (if we were doing actual parsing, we wouldn’t do that):</p>
-<div class="sourceCode" id="cb65"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true"></a>    <span class="at">comptime</span> {</span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true"></a>        <span class="kw">var</span> split = std.mem.split(<span class="dt">u8</span>, str, <span class="st">&quot; &quot;</span>);</span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true"></a>        <span class="cf">while</span> (split.next()) |word| {</span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true"></a></span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true"></a>        }</span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true"></a>    }</span>
-<span id="cb65-8"><a href="#cb65-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb67"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true"></a>    <span class="at">comptime</span> {</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true"></a>        <span class="kw">var</span> split = std.mem.split(<span class="dt">u8</span>, str, <span class="st">&quot; &quot;</span>);</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true"></a>        <span class="cf">while</span> (split.next()) |word| {</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true"></a></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true"></a>        }</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true"></a>    }</span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true"></a>}</span></code></pre></div>
 <p>And we can fully make it a state machine:</p>
-<div class="sourceCode" id="cb66"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true"></a><span class="at">const</span> ParserState = <span class="kw">enum</span> {</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true"></a>    Start,</span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true"></a>    StartBinaryOp,</span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true"></a>};</span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true"></a></span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true"></a><span class="co">/// Returns whether &#39;word&#39; corresponds to a variable defined in &#39;args&#39;</span></span>
-<span id="cb66-7"><a href="#cb66-7" aria-hidden="true"></a><span class="kw">fn</span> isVariable(<span class="at">comptime</span> word: []<span class="at">const</span> <span class="dt">u8</span>, <span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">bool</span> {</span>
-<span id="cb66-8"><a href="#cb66-8" aria-hidden="true"></a>    <span class="cf">return</span> <span class="bu">@hasField</span>(T, word);</span>
-<span id="cb66-9"><a href="#cb66-9" aria-hidden="true"></a>}</span>
-<span id="cb66-10"><a href="#cb66-10" aria-hidden="true"></a></span>
-<span id="cb66-11"><a href="#cb66-11" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
-<span id="cb66-12"><a href="#cb66-12" aria-hidden="true"></a>    <span class="at">comptime</span> {</span>
-<span id="cb66-13"><a href="#cb66-13" aria-hidden="true"></a>        <span class="kw">var</span> state = ParserState.Start;</span>
-<span id="cb66-14"><a href="#cb66-14" aria-hidden="true"></a>        <span class="kw">var</span> split = std.mem.split(<span class="dt">u8</span>, str, <span class="st">&quot; &quot;</span>);</span>
-<span id="cb66-15"><a href="#cb66-15" aria-hidden="true"></a></span>
-<span id="cb66-16"><a href="#cb66-16" aria-hidden="true"></a>        <span class="cf">while</span> (split.next()) |word| {</span>
-<span id="cb66-17"><a href="#cb66-17" aria-hidden="true"></a>            <span class="cf">switch</span> (state) {</span>
-<span id="cb66-18"><a href="#cb66-18" aria-hidden="true"></a>                .Start =&gt; {</span>
-<span id="cb66-19"><a href="#cb66-19" aria-hidden="true"></a>                    <span class="cf">if</span> (isVariable(word, <span class="bu">@TypeOf</span>(args))) {</span>
-<span id="cb66-20"><a href="#cb66-20" aria-hidden="true"></a>                        state = .StartBinaryOp;</span>
-<span id="cb66-21"><a href="#cb66-21" aria-hidden="true"></a>                    } <span class="cf">else</span> {</span>
-<span id="cb66-22"><a href="#cb66-22" aria-hidden="true"></a>                        <span class="bu">@compileError</span>(<span class="st">&quot;We don&#39;t know how to handle that yet!&quot;</span>);</span>
-<span id="cb66-23"><a href="#cb66-23" aria-hidden="true"></a>                    }</span>
-<span id="cb66-24"><a href="#cb66-24" aria-hidden="true"></a>                },</span>
-<span id="cb66-25"><a href="#cb66-25" aria-hidden="true"></a>                .StartBinaryOp =&gt; {} <span class="co">// </span><span class="al">TODO</span></span>
-<span id="cb66-26"><a href="#cb66-26" aria-hidden="true"></a>            }</span>
-<span id="cb66-27"><a href="#cb66-27" aria-hidden="true"></a>        }</span>
-<span id="cb66-28"><a href="#cb66-28" aria-hidden="true"></a>    }</span>
-<span id="cb66-29"><a href="#cb66-29" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb68"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true"></a><span class="at">const</span> ParserState = <span class="kw">enum</span> {</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true"></a>    Start,</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true"></a>    StartBinaryOp,</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true"></a>};</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true"></a></span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true"></a><span class="co">/// Returns whether &#39;word&#39; corresponds to a variable defined in &#39;args&#39;</span></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true"></a><span class="kw">fn</span> isVariable(<span class="at">comptime</span> word: []<span class="at">const</span> <span class="dt">u8</span>, <span class="at">comptime</span> T: <span class="dt">type</span>) <span class="dt">bool</span> {</span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true"></a>    <span class="cf">return</span> <span class="bu">@hasField</span>(T, word);</span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true"></a>}</span>
+<span id="cb68-10"><a href="#cb68-10" aria-hidden="true"></a></span>
+<span id="cb68-11"><a href="#cb68-11" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> operload(<span class="at">comptime</span> str: []<span class="at">const</span> <span class="dt">u8</span>, args: <span class="dt">anytype</span>) Vector3 {</span>
+<span id="cb68-12"><a href="#cb68-12" aria-hidden="true"></a>    <span class="at">comptime</span> {</span>
+<span id="cb68-13"><a href="#cb68-13" aria-hidden="true"></a>        <span class="kw">var</span> state = ParserState.Start;</span>
+<span id="cb68-14"><a href="#cb68-14" aria-hidden="true"></a>        <span class="kw">var</span> split = std.mem.split(<span class="dt">u8</span>, str, <span class="st">&quot; &quot;</span>);</span>
+<span id="cb68-15"><a href="#cb68-15" aria-hidden="true"></a></span>
+<span id="cb68-16"><a href="#cb68-16" aria-hidden="true"></a>        <span class="cf">while</span> (split.next()) |word| {</span>
+<span id="cb68-17"><a href="#cb68-17" aria-hidden="true"></a>            <span class="cf">switch</span> (state) {</span>
+<span id="cb68-18"><a href="#cb68-18" aria-hidden="true"></a>                .Start =&gt; {</span>
+<span id="cb68-19"><a href="#cb68-19" aria-hidden="true"></a>                    <span class="cf">if</span> (isVariable(word, <span class="bu">@TypeOf</span>(args))) {</span>
+<span id="cb68-20"><a href="#cb68-20" aria-hidden="true"></a>                        state = .StartBinaryOp;</span>
+<span id="cb68-21"><a href="#cb68-21" aria-hidden="true"></a>                    } <span class="cf">else</span> {</span>
+<span id="cb68-22"><a href="#cb68-22" aria-hidden="true"></a>                        <span class="bu">@compileError</span>(<span class="st">&quot;We don&#39;t know how to handle that yet!&quot;</span>);</span>
+<span id="cb68-23"><a href="#cb68-23" aria-hidden="true"></a>                    }</span>
+<span id="cb68-24"><a href="#cb68-24" aria-hidden="true"></a>                },</span>
+<span id="cb68-25"><a href="#cb68-25" aria-hidden="true"></a>                .StartBinaryOp =&gt; {} <span class="co">// </span><span class="al">TODO</span></span>
+<span id="cb68-26"><a href="#cb68-26" aria-hidden="true"></a>            }</span>
+<span id="cb68-27"><a href="#cb68-27" aria-hidden="true"></a>        }</span>
+<span id="cb68-28"><a href="#cb68-28" aria-hidden="true"></a>    }</span>
+<span id="cb68-29"><a href="#cb68-29" aria-hidden="true"></a>}</span></code></pre></div>
 <h1 id="bad-writing-graveyard">bad writing graveyard</h1>
 <p>Memory - Variables:</p>
 <p>Imagine, because we have limited space on our desk, we use in a tiny screen which can only show up to 4 digits, it’s easy to guess our maximum number is 9999. This would work to show a tiny number like the number of notifications you have on a phone. If we used a signed number, using the same space, the maximum and minimum would be +999 and -999.</p>
@@ -835,11 +878,11 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <p>In practice, the number of digits is replaced by the number of bits. The maximum and minimum value, like in the above analogy, depend on whether it is a signed or an unsigned number.</p>
 <h1 id="todo">TODO</h1>
 <p>utilité erreur “unused variable”: you copy-pasted a test case:</p>
-<div class="sourceCode" id="cb67"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true"></a><span class="kw">var</span> rect = Rect(.{ .color = Color.blue });</span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true"></a>std.testing.expectEqual(Color.blue, rect.color);</span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true"></a></span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true"></a><span class="kw">var</span> rect2 = Rect(.{ .color = Color.yellow });</span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true"></a>std.testing.expectEqual(Color.yellow, rect.color);</span></code></pre></div>
+<div class="sourceCode" id="cb69"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true"></a><span class="kw">var</span> rect = Rect(.{ .color = Color.blue });</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true"></a>std.testing.expectEqual(Color.blue, rect.color);</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true"></a></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true"></a><span class="kw">var</span> rect2 = Rect(.{ .color = Color.yellow });</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true"></a>std.testing.expectEqual(Color.yellow, rect.color);</span></code></pre></div>
 <p>This looks perfectly fine to run! Except not, we did a typo (<code>rect</code> instead of <code>rect2</code>) and the test will fail, Zig avoids this by making unused variables an error, it can feel like a pain, but it can save you from a lot of bugs like this.</p>
 	</body>
 </html>

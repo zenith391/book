@@ -687,7 +687,40 @@ of your programs, it also detects common memory errors (leaks, use-after-free, d
 
 ### Application: a list of grades
 To apply our newly earned knowledge, we can code a simple yet useful program, computing the average
-of your numerical grades:
+of your numerical grades
+
+We start by setting up the allocator and the reader:
+```zig
+const std = @import("std");
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}) {};
+    const allocator = gpa.allocator();
+    const reader = std.io.getStdIn().reader();
+}
+```
+
+Then, in order to collect all grades, we're gonna use an [ArrayList](https://github.com/ziglang/zig/blob/master/lib/std/array_list.zig#L17) and start a loop:
+```zig
+var gpa = std.heap.GeneralPurposeAllocator(.{}) {};
+const allocator = gpa.allocator();
+const reader = std.io.getStdIn().reader();
+
+var grades = std.ArrayList(f32).init(allocator);
+defer grades.deinit();
+while (true) {
+
+}
+```
+`defer grades.deinit();` is a kind of statement that is very often used in Zig. It means that at the
+end of the current block (usually a function or loop) it will call `grades.deinit()`. And `grades.deinit()`
+will free all the memory used up by the array list.
+
+Next, we use [`reader.readUntilDelimiterAlloc`](https://github.com/ziglang/zig/blob/master/lib/std/io/reader.zig#L124)
+to read a line of text from the input and then we parse it as a float if it isn't empty.
+Finally we just do the sum of all grades and divide it by the number of grades to get the average.
+
+Here is the full example ([grade2.zig](examples/grade2.zig))
 ```zig
 const std = @import("std");
 
@@ -699,13 +732,22 @@ pub fn main() !void {
     var grades = std.ArrayList(f32).init(allocator);
     defer grades.deinit();
     while (true) {
-        const line = try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', std.math.maxInt(usize));
+        std.debug.print("Enter a grade: ", .{});
+        const line = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
         if (std.mem.eql(u8, line, "")) { // empty line means we stop entering grades
             break;
         } else {
             const number = try std.fmt.parseFloat(f32, line);
+            try grades.append(number);
         }
     }
+
+    var sum: f32 = 0; // add all the grades
+    for (grades.items) |grade| {
+        sum += grade;
+    }
+    const average = sum / @intToFloat(f32, grades.items.len); // and divide by the number of grades
+    std.debug.print("Your average is {d}\n", .{ average });
 }
 ```
 
