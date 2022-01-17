@@ -139,7 +139,7 @@
 	<header id="title-block-header">
 	<h1 class="title">Discovering The Zig Programming Language</h1>
 	<p class="author">zenith391</p>
-	<p class="date">Last edited on 22-01-17 20:59:08+00:00</p>
+	<p class="date">Last edited on 22-01-17 21:01:45+00:00</p>
 	</header>
 	<nav id="TOC" role="doc-toc">
 <ul>
@@ -582,8 +582,10 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <p>Here <code>allocator</code> is a page allocator, it directly talks to the OS, without even using <code>malloc</code> and is incredibly inefficient. For example, if you try to allocate an <code>u32</code>, it would allocate 4096 bytes even if we only use 4 bytes.</p>
 <p>The allocator we’ll most commonly use in zig is the GPA (General Purpose Allocator):</p>
 <div class="sourceCode" id="cb40"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true"></a><span class="kw">var</span> gpa = std.heap.GeneralPurposeAllocator(.{}) {};</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="at">const</span> allocator = gpa.allocator();</span></code></pre></div>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="cf">defer</span> _ = gpa.deinit();</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true"></a><span class="at">const</span> allocator = gpa.allocator();</span></code></pre></div>
 <p>Here we have to keep <code>gpa</code> as it’s the variable that will store the allocator’s state, and then <code>allocator</code> is the interface we can use. The general purpose allocator is, as its name implies, general purpose, so it should go for most of your programs, it also detects common memory errors (leaks, use-after-free, double free…)</p>
+<p><code>defer _ = gpa.deinit();</code> is a <code>defer</code> statement, which is very often used in Zig. It means that at the end of the current block (usually a function or loop) it will do <code>_ = gpa.deinit()</code>. In this case it means calling the GPA’s function that allows to detect leaks and ignore its result.</p>
 <h3 id="application-a-list-of-grades">Application: a list of grades</h3>
 <p>To apply our newly earned knowledge, we can code a simple yet useful program, computing the average of your numerical grades</p>
 <p>We start by setting up the allocator and the reader:</p>
@@ -611,29 +613,31 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true"></a></span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> main() !<span class="dt">void</span> {</span>
 <span id="cb43-4"><a href="#cb43-4" aria-hidden="true"></a>    <span class="kw">var</span> gpa = std.heap.GeneralPurposeAllocator(.{}) {};</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true"></a>    <span class="at">const</span> allocator = gpa.allocator();</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true"></a>    <span class="at">const</span> reader = std.io.getStdIn().reader();</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true"></a></span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true"></a>    <span class="kw">var</span> grades = std.ArrayList(<span class="dt">f32</span>).init(allocator);</span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true"></a>    <span class="cf">defer</span> grades.deinit();</span>
-<span id="cb43-10"><a href="#cb43-10" aria-hidden="true"></a>    <span class="cf">while</span> (<span class="kw">true</span>) {</span>
-<span id="cb43-11"><a href="#cb43-11" aria-hidden="true"></a>        std.debug.print(<span class="st">&quot;Enter a grade: &quot;</span>, .{});</span>
-<span id="cb43-12"><a href="#cb43-12" aria-hidden="true"></a>        <span class="at">const</span> line = <span class="cf">try</span> reader.readUntilDelimiterAlloc(allocator, <span class="ch">&#39;\n&#39;</span>, std.math.maxInt(<span class="dt">usize</span>));</span>
-<span id="cb43-13"><a href="#cb43-13" aria-hidden="true"></a>        <span class="cf">if</span> (std.mem.eql(<span class="dt">u8</span>, line, <span class="st">&quot;&quot;</span>)) { <span class="co">// empty line means we stop entering grades</span></span>
-<span id="cb43-14"><a href="#cb43-14" aria-hidden="true"></a>            <span class="cf">break</span>;</span>
-<span id="cb43-15"><a href="#cb43-15" aria-hidden="true"></a>        } <span class="cf">else</span> {</span>
-<span id="cb43-16"><a href="#cb43-16" aria-hidden="true"></a>            <span class="at">const</span> number = <span class="cf">try</span> std.fmt.parseFloat(<span class="dt">f32</span>, line);</span>
-<span id="cb43-17"><a href="#cb43-17" aria-hidden="true"></a>            <span class="cf">try</span> grades.append(number);</span>
-<span id="cb43-18"><a href="#cb43-18" aria-hidden="true"></a>        }</span>
-<span id="cb43-19"><a href="#cb43-19" aria-hidden="true"></a>    }</span>
-<span id="cb43-20"><a href="#cb43-20" aria-hidden="true"></a></span>
-<span id="cb43-21"><a href="#cb43-21" aria-hidden="true"></a>    <span class="kw">var</span> sum: <span class="dt">f32</span> = <span class="dv">0</span>; <span class="co">// add all the grades</span></span>
-<span id="cb43-22"><a href="#cb43-22" aria-hidden="true"></a>    <span class="cf">for</span> (grades.items) |grade| {</span>
-<span id="cb43-23"><a href="#cb43-23" aria-hidden="true"></a>        sum += grade;</span>
-<span id="cb43-24"><a href="#cb43-24" aria-hidden="true"></a>    }</span>
-<span id="cb43-25"><a href="#cb43-25" aria-hidden="true"></a>    <span class="at">const</span> average = sum / <span class="bu">@intToFloat</span>(<span class="dt">f32</span>, grades.items.len); <span class="co">// and divide by the number of grades</span></span>
-<span id="cb43-26"><a href="#cb43-26" aria-hidden="true"></a>    std.debug.print(<span class="st">&quot;Your average is {d}</span><span class="sc">\n</span><span class="st">&quot;</span>, .{ average });</span>
-<span id="cb43-27"><a href="#cb43-27" aria-hidden="true"></a>}</span></code></pre></div>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true"></a>    <span class="cf">defer</span> _ = gpa.deinit();</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true"></a>    <span class="at">const</span> allocator = gpa.allocator();</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true"></a>    <span class="at">const</span> reader = std.io.getStdIn().reader();</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true"></a></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true"></a>    <span class="kw">var</span> grades = std.ArrayList(<span class="dt">f32</span>).init(allocator);</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true"></a>    <span class="cf">defer</span> grades.deinit();</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true"></a>    <span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true"></a>        std.debug.print(<span class="st">&quot;Enter a grade: &quot;</span>, .{});</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true"></a>        <span class="at">const</span> line = <span class="cf">try</span> reader.readUntilDelimiterAlloc(allocator, <span class="ch">&#39;\n&#39;</span>, std.math.maxInt(<span class="dt">usize</span>));</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true"></a>        <span class="cf">defer</span> allocator.free(line);</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true"></a>        <span class="cf">if</span> (std.mem.eql(<span class="dt">u8</span>, line, <span class="st">&quot;&quot;</span>)) { <span class="co">// empty line means we stop entering grades</span></span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true"></a>            <span class="cf">break</span>;</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true"></a>        } <span class="cf">else</span> {</span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true"></a>            <span class="at">const</span> number = <span class="cf">try</span> std.fmt.parseFloat(<span class="dt">f32</span>, line);</span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true"></a>            <span class="cf">try</span> grades.append(number);</span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true"></a>        }</span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true"></a>    }</span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true"></a></span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true"></a>    <span class="kw">var</span> sum: <span class="dt">f32</span> = <span class="dv">0</span>; <span class="co">// add all the grades</span></span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true"></a>    <span class="cf">for</span> (grades.items) |grade| {</span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true"></a>        sum += grade;</span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true"></a>    }</span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true"></a>    <span class="at">const</span> average = sum / <span class="bu">@intToFloat</span>(<span class="dt">f32</span>, grades.items.len); <span class="co">// and divide by the number of grades</span></span>
+<span id="cb43-28"><a href="#cb43-28" aria-hidden="true"></a>    std.debug.print(<span class="st">&quot;Your average is {d}</span><span class="sc">\n</span><span class="st">&quot;</span>, .{ average });</span>
+<span id="cb43-29"><a href="#cb43-29" aria-hidden="true"></a>}</span></code></pre></div>
 <h3 id="example-handling-an-image">Example: Handling an image</h3>
 <p>Being able to handle images is very important for making an image editor (from MS Paint to Photoshop) or using them in an image viewer, a video game, etc.</p>
 <p>A key property of an image is it’s size, which is defined with a width and an height measured in pixels.</p>

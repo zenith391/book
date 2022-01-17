@@ -678,12 +678,17 @@ For example, if you try to allocate an `u32`, it would allocate 4096 bytes even 
 The allocator we'll most commonly use in zig is the GPA (General Purpose Allocator):
 ```zig
 var gpa = std.heap.GeneralPurposeAllocator(.{}) {};
+defer _ = gpa.deinit();
 const allocator = gpa.allocator();
 ```
 Here we have to keep `gpa` as it's the variable that will store the allocator's state, and then
 `allocator` is the interface we can use.
 The general purpose allocator is, as its name implies, general purpose, so it should go for most
 of your programs, it also detects common memory errors (leaks, use-after-free, double free...)
+
+`defer _ = gpa.deinit();` is a `defer` statement, which is very often used in Zig. It means that at the
+end of the current block (usually a function or loop) it will do `_ = gpa.deinit()`. In this case it means
+calling the GPA's function that allows to detect leaks and ignore its result.
 
 ### Application: a list of grades
 To apply our newly earned knowledge, we can code a simple yet useful program, computing the average
@@ -726,6 +731,7 @@ const std = @import("std");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}) {};
+    defer _ = gpa.deinit();
     const allocator = gpa.allocator();
     const reader = std.io.getStdIn().reader();
 
@@ -734,6 +740,7 @@ pub fn main() !void {
     while (true) {
         std.debug.print("Enter a grade: ", .{});
         const line = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
+        defer allocator.free(line);
         if (std.mem.eql(u8, line, "")) { // empty line means we stop entering grades
             break;
         } else {
