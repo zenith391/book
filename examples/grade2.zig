@@ -2,6 +2,7 @@ const std = @import("std");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}) {};
+    defer _ = gpa.deinit();
     const allocator = gpa.allocator();
     const reader = std.io.getStdIn().reader();
 
@@ -10,6 +11,7 @@ pub fn main() !void {
     while (true) {
         std.debug.print("Enter a grade: ", .{});
         const line = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
+        defer allocator.free(line);
         if (std.mem.eql(u8, line, "")) { // empty line means we stop entering grades
             break;
         } else {
