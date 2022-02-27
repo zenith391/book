@@ -15,6 +15,8 @@ English version | Version française (à faire)
 
 # Foreword
 
+ZIG: Zig Isn't Gnu
+
 This book targets people who already have experience programming in other
 languages. Having experience in a systems programming language like C or
 Rust can help but having something like intermediate level in Python is
@@ -31,6 +33,7 @@ Complementary (free) material you might also want to use to learn Zig:
 - [Reading the standard library](https://github.com/ziglang/zig/tree/master/lib/std) because
 it is really well written and serves as an example for many concepts and conventions in Zig.
 - [Zig examples](https://github.com/Mouvedia/zig-examples/blob/main/zig.html.markdown)
+- [Zig by example](https://zig-by-example.com/)
 
 # Zig, Why?
 
@@ -573,9 +576,14 @@ It should be used for separating strings into grapheme clusters (necessary for m
 [emojis](https://tonsky.me/blog/emoji/)) or string order, whether it's ascending or descending.
 
 But really, in most cases, you should reconsider whether you really to do those string operations
-because, often, they [don't make sense in other languages](https://utf8everywhere.org/#myth.strlen).
+because, often, they [don't make sense in other languages](https://utf8everywhere.org/#myth.strlen).  
+In fact, even with support for grapheme clusters there can be problems.
+Think about "œ" (used in languages like French), it's one grapheme but two characters, yet you would
+expect the reverse of "œuf" to be "fueo" (which would need special handling, imagine that for all
+the characters in the world..) if we reverse it again, we get "oeuf" which, linguistically, isn't the
+same word. So even in Latin languages, those job interviews string problems cause problems.
 
-What's the upper casing of नमस्ते👩‍👦‍👦שָׁלוֹם ?
+To conclude I'll ask you: what's the upper casing of नमस्ते👩‍👦‍👦שָׁלוֹם ?
 
 # Pointers
 
@@ -647,6 +655,20 @@ boundfn, etc.
 
 **This chapter needs serious rewrite.**
 
+## Analogy
+
+(from somethingelseentirely#3625)
+
+* Automatic memory management is like taking the train to go places. You buy the ticket, leave where you want to go, but the train company takes care of putting the train back into its depot at night.
+* Manual Memory Management is like a rental car. It is up to you to pick it up from the company, drive around with it, and then bring it back.
+Bad things happen when you loose the keys without returning it (you forgot to call free()), or when you brought it back to the company (the allocator) but forgot to pick up your kids from their thing (use after free()).
+* Normally there is only one rental company in your entire area (in languages like Rust, which have a default allocator), but one of the cool things about zig is that there are multiple companies to choose from (that's why you can explicitly pass allocators around).
+* Normally you pretend that there are always cars available at the company, but that means you're screwed when they don't have a car available. (Another cool thing about zig, the language forces you to handle the case where alloc/car rental, fails.)
+* An areana allocator is just a special kind of car company, that tells you: "Hey you can park all the cars you rented from us in the same parking spot, and tell us where to find them at the end of the week, so no need to return each car one by one."
+* The testing allocator is just a rental company for people who recently finished their driving lessons, so they will call you to remind you that you forgot to bring back the car, but since that's a very expensive service (in terms of performance), it's normally not something offered by regular rental companies, and for them "bad things happen TM". 
+
+## Explanation
+
 In computer programming, memory allocations are everywhere, simply adding an element to an array
 (like `[1,2].push(3)` in JS) will cause allocations.  
 What they are is simple, as said in the name, an allocation is when you allocate a chunk of memory
@@ -690,7 +712,7 @@ of your programs, it also detects common memory errors (leaks, use-after-free, d
 end of the current block (usually a function or loop) it will do `_ = gpa.deinit()`. In this case it means
 calling the GPA's function that allows to detect leaks and ignore its result.
 
-### Application: a list of grades
+### Practice: a list of grades
 To apply our newly earned knowledge, we can code a simple yet useful program, computing the average
 of your numerical grades
 
@@ -720,6 +742,34 @@ while (true) {
 `defer grades.deinit();` is a kind of statement that is very often used in Zig. It means that at the
 end of the current block (usually a function or loop) it will call `grades.deinit()`. And `grades.deinit()`
 will free all the memory used up by the array list.
+
+<div class="box-information">
+
+To show how scopes work, you can see the following code
+```zig
+pub fn function() void {
+    var x: usize = 1;
+    {
+        defer x += 2;
+        x *= 5;
+    }
+    x /= 2;
+    return x;
+}
+```
+is equivalent to:
+```zig
+pub fn function() void {
+    var x: usize = 1;
+    {
+        x *= 5;
+        x += 2;
+    }
+    x /= 2;
+    return x;
+}
+```
+</div>
 
 Next, we use [`reader.readUntilDelimiterAlloc`](https://github.com/ziglang/zig/blob/master/lib/std/io/reader.zig#L124)
 to read a line of text from the input and then we parse it as a float if it isn't empty.
@@ -1085,7 +1135,7 @@ operload("a + ( b * ( normalize c + d ) )",
 ```
 
 For simplicity, we will not take care of operator precedence (the fact that we
-do multiplications first and then we do additions) to make parsing simpler given
+do multiplications first and then we do additions) in order to make parsing simpler given
 it's not the main topic here.
 
 We can quickly devise a parser where the root node is an Expression.
