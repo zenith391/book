@@ -218,9 +218,9 @@ number of digits.
 
 ```zig
 const a: i16 = -12345; // This is an integer that takes 16-bit
-const b: i16 = 60000; // This value is too large to fit in 16-bit and will make a compile error,
+const b: i16 = 60000;  // This value is too large to fit in 16-bit and will make a compile error,
 // So we can increase the bit size:
-const c: i32 = 60000; // yay!
+const c: i32 = 60000;  // yay!
 ```
 
 There's also another trick to save on bytes: unsigned integers.
@@ -228,8 +228,8 @@ There's also another trick to save on bytes: unsigned integers.
 This means it can only store positive values
 ```zig
 const a: u16 = 60000; // works
-const b: u16 = 0;   // works
-const c: u16 = -12; // error!
+const b: u16 = 0;     // works
+const c: u16 = -12;   // error!
 ```
 
 In a sense, setting the bit size for your integer is like asserting that it will never go above the maximum value
@@ -427,7 +427,7 @@ for (var item of items) {
 
 to the following Zig code:
 ```zig
-var items = [_]u32 { 124, 325, 12, 95423, 10 };
+var items = [_]u32 { 124, 135, 12, 95423, 10 };
 for (items) |item| {
     std.debug.print("{}\n", .{ item });
 }
@@ -575,7 +575,7 @@ all needed Unicode data (thanks to comptime) and makes correct behaviour for Uni
 It should be used for separating strings into grapheme clusters (necessary for most
 [emojis](https://tonsky.me/blog/emoji/)) or string order, whether it's ascending or descending.
 
-But really, in most cases, you should reconsider whether you really to do those string operations
+But really, in most cases, you should reconsider whether you really want to do those string operations
 because, often, they [don't make sense in other languages](https://utf8everywhere.org/#myth.strlen).  
 In fact, even with support for grapheme clusters there can be problems.
 Think about "œ" (used in languages like French), it's one grapheme but two characters, yet you would

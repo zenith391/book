@@ -139,7 +139,7 @@
 	<header id="title-block-header">
 	<h1 class="title">Discovering The Zig Programming Language</h1>
 	<p class="author">zenith391</p>
-	<p class="date">Last edited on 22-02-27 11:07:37+00:00</p>
+	<p class="date">Last edited on 22-02-27 11:22:01+00:00</p>
 	</header>
 	<nav id="TOC" role="doc-toc">
 <ul>
@@ -307,14 +307,14 @@ Hello, World</code></pre>
 <p>Except for a few special types, <strong>all variables use a fixed number of bytes from the computer memory</strong>.</p>
 <p>This means all numbers use a fixed number of bytes. For integers, that fixed number of bytes gives the maximum value of a number. This is like if we had to write an integer in a limited number of digits.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="at">const</span> a: <span class="dt">i16</span> = -<span class="dv">12345</span>; <span class="co">// This is an integer that takes 16-bit</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="at">const</span> b: <span class="dt">i16</span> = <span class="dv">60000</span>; <span class="co">// This value is too large to fit in 16-bit and will make a compile error,</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="at">const</span> b: <span class="dt">i16</span> = <span class="dv">60000</span>;  <span class="co">// This value is too large to fit in 16-bit and will make a compile error,</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a><span class="co">// So we can increase the bit size:</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="at">const</span> c: <span class="dt">i32</span> = <span class="dv">60000</span>; <span class="co">// yay!</span></span></code></pre></div>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="at">const</span> c: <span class="dt">i32</span> = <span class="dv">60000</span>;  <span class="co">// yay!</span></span></code></pre></div>
 <p>There’s also another trick to save on bytes: unsigned integers.</p>
 <p>This means it can only store positive values</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="at">const</span> a: <span class="dt">u16</span> = <span class="dv">60000</span>; <span class="co">// works</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="at">const</span> b: <span class="dt">u16</span> = <span class="dv">0</span>;   <span class="co">// works</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="at">const</span> c: <span class="dt">u16</span> = -<span class="dv">12</span>; <span class="co">// error!</span></span></code></pre></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="at">const</span> b: <span class="dt">u16</span> = <span class="dv">0</span>;     <span class="co">// works</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="at">const</span> c: <span class="dt">u16</span> = -<span class="dv">12</span>;   <span class="co">// error!</span></span></code></pre></div>
 <p>In a sense, setting the bit size for your integer is like asserting that it will never go above the maximum value and that it will never go below the minimum value.</p>
 <div class="box-information">
 <ul>
@@ -476,7 +476,7 @@ Hello, World</code></pre>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(item)<span class="op">;</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>}</span></code></pre></div>
 <p>to the following Zig code:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="kw">var</span> items = [_]<span class="dt">u32</span> { <span class="dv">124</span>, <span class="dv">325</span>, <span class="dv">12</span>, <span class="dv">95423</span>, <span class="dv">10</span> };</span>
+<div class="sourceCode" id="cb27"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="kw">var</span> items = [_]<span class="dt">u32</span> { <span class="dv">124</span>, <span class="dv">135</span>, <span class="dv">12</span>, <span class="dv">95423</span>, <span class="dv">10</span> };</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a><span class="cf">for</span> (items) |item| {</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>    std.debug.print(<span class="st">&quot;{}</span><span class="sc">\n</span><span class="st">&quot;</span>, .{ item });</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a>}</span></code></pre></div>
@@ -861,7 +861,7 @@ Zig on the other hand allows you to <em>choose</em> what allocator you want to u
 <p>Our end goal is being able to write something like</p>
 <div class="sourceCode" id="cb67"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true"></a>operload(<span class="st">&quot;a + ( b * ( normalize c + d ) )&quot;</span>,</span>
 <span id="cb67-2"><a href="#cb67-2" aria-hidden="true"></a>    .{ .a = a, .b = b, .c = c, .d = d });</span></code></pre></div>
-<p>For simplicity, we will not take care of operator precedence (the fact that we do multiplications first and then we do additions) to make parsing simpler given it’s not the main topic here.</p>
+<p>For simplicity, we will not take care of operator precedence (the fact that we do multiplications first and then we do additions) in order to make parsing simpler given it’s not the main topic here.</p>
 <p>We can quickly devise a parser where the root node is an Expression.</p>
 <p>An expression can be either an unary operation (like <code>normalize c</code>) or a binary operation (like <code>a + ( b * ... )</code>).</p>
 <p>For that we can build a simple state machine that will match for every word:</p>
