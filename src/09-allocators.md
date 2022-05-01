@@ -1,6 +1,6 @@
 # Allocators
 
-**This chapter needs serious rewrite.**
+Computers have a limited amount of RAM that you probably notice when seeing your computer has 16GB and Google Chrome consumes 3GB. But how does the browser 'consumes' memory? That's what will be seen in this chapter.
 
 ## Analogy
 
@@ -24,17 +24,15 @@ variables don't get the same chunk.
 You can imagine it's like a landlord, selling an house from all the houses he own, and he must of course not sell
 the same house twice.
 
-<img src="anim1.svg" style="max-width: 400px"></img>
+<img title="" src="../anim1.svg" alt="" style="max-width: 400px">
 
 (1 square = 1 byte)  
 The little animation above shows how a very simple allocator with only 8 bytes of memory would work.
 First, we allocate an `u32` (4 bytes), and then after it we allocate an `u16` (2 bytes).
 If we tried to allocate another `u32` (4 bytes) we'd get *out of memory* (because 4+2+4 > 8)
 
-In practice, most languages usually boil down to using a specific `malloc` function, which is a function provided
-by your system (libc) to allocate memory (which is much more complicated than what the animation shows).  
-Zig on the other hand allows you to *choose* what allocator you want to use, and to allow that, it makes
-every allocation explicit, which goes hand in hand with zig's zen of communicating intent precisely.
+In practice, most languages usually boil down to using a specific `malloc` function, which is a function provided by your system (libc) to allocate memory (which is much more complicated than what the animation shows).  
+Zig on the other hand allows you to *choose* what allocator you want to use, and to allow that, it makes every allocation explicit, which goes hand in hand with Zig's zen of communicating intent precisely.
 
 For example:
 
@@ -42,8 +40,7 @@ For example:
 const allocator: std.mem.Allocator = std.heap.page_allocator;
 ```
 
-Here `allocator` is a page allocator, it directly talks to the OS, without even using `malloc` and is incredibly
-inefficient.
+Here `allocator` is a page allocator, it directly talks to the OS, without even using `malloc` and is incredibly inefficient.
 For example, if you try to allocate an `u32`, it would allocate 4096 bytes even if we only use 4 bytes.
 
 The allocator we'll most commonly use in zig is the GPA (General Purpose Allocator):
@@ -54,14 +51,10 @@ defer _ = gpa.deinit();
 const allocator = gpa.allocator();
 ```
 
-Here we have to keep `gpa` as it's the variable that will store the allocator's state, and then
-`allocator` is the interface we can use.
-The general purpose allocator is, as its name implies, general purpose, so it should go for most
-of your programs, it also detects common memory errors (leaks, use-after-free, double free...)
+Here we have to keep `gpa` as it's the variable that will store the allocator's state, and then `allocator` is the interface we can use.
+The general purpose allocator is, as its name implies, general purpose, so it should go for most of your programs, it also detects common memory errors (leaks, use-after-free, double free...)
 
-`defer _ = gpa.deinit();` is a `defer` statement, which is very often used in Zig. It means that at the
-end of the current block (usually a function or loop) it will do `_ = gpa.deinit()`. In this case it means
-calling the GPA's function that allows to detect leaks and ignore its result.
+`defer _ = gpa.deinit();` is a `defer` statement, which is very often used in Zig. It means that at the end of the current block (usually a function or loop) it will do `_ = gpa.deinit()`. In this case it means calling the GPA's function that allows to detect leaks and ignore its result.
 
 ### Practice: a list of grades
 
@@ -94,37 +87,39 @@ while (true) {
 }
 ```
 
-`defer grades.deinit();` is a kind of statement that is very often used in Zig. It means that at the
-end of the current block (usually a function or loop) it will call `grades.deinit()`. And `grades.deinit()`
-will free all the memory used up by the array list.
+`defer grades.deinit();` is a kind of statement that is very used in Zig. It means that at the end of the current block (usually a function or loop) it will call `grades.deinit()`. And `grades.deinit()` will free all the memory used up by the array list.
 
 <div class="box-information">
 
 To show how scopes work, you can see the following code
 
 ```zig
-pub fn function() void {
+pub fn function() bool {
     var x: usize = 1;
+    var isOkay = false;
     {
-        defer x += 2;
+        defer isOkay = (x == 5);
         x *= 5;
+        x += 2;
     }
     x /= 2;
-    return x;
+    return isOkay;
 }
 ```
 
 is equivalent to:
 
 ```zig
-pub fn function() void {
+pub fn function() bool {
     var x: usize = 1;
+    var isOkay = false;
     {
-        x *= 5;
+        x *= 3;
         x += 2;
+        isOkay = (x == 5);
     }
     x /= 2;
-    return x;
+    return isOkay;
 }
 ```
 
@@ -151,7 +146,7 @@ pub fn main() !void {
         std.debug.print("Enter a grade: ", .{});
         const line = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
         defer allocator.free(line);
-        if (std.mem.eql(u8, line, "")) { // empty line means we stop entering grades
+        if (std.mem.eql(u8, line, "")) { // an empty line means we stop entering grades
             break;
         } else {
             const number = try std.fmt.parseFloat(f32, line);

@@ -139,12 +139,14 @@
 	<header id="title-block-header">
 	<h1 class="title">Discovering The Zig Programming Language</h1>
 	<p class="author">zenith391</p>
-	<p class="date">Last edited on 22-05-01 09:42:28+00:00</p>
+	<p class="date">Last edited on 22-05-01 10:35:13+00:00</p>
 	</header>
 	<nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#foreword">Foreword</a></li>
+<li><a href="#preface">Preface</a>
+<ul>
 <li><a href="#zig-why">Zig, Why?</a></li>
+</ul></li>
 <li><a href="#introduction">Introduction</a>
 <ul>
 <li><a href="#installing-zig">Installing Zig</a></li>
@@ -160,7 +162,14 @@
 <ul>
 <li><a href="#while-loop">While loop</a></li>
 <li><a href="#for-loop">For loop</a></li>
+</ul></li>
+<li><a href="#functions">Functions</a>
+<ul>
 <li><a href="#error-handling-in-functions">Error handling in functions</a></li>
+</ul></li>
+<li><a href="#slices">Slices</a>
+<ul>
+<li><a href="#strings">Strings</a></li>
 </ul></li>
 <li><a href="#the-zig-the-string-and-the-unicode">The Zig, the String, and the Unicode</a></li>
 <li><a href="#pointers">Pointers</a></li>
@@ -200,20 +209,24 @@ Zig gotta go fast
 </figcaption>
 </figure>
 <p>English version | Version française (à faire)</p>
-<h1 id="foreword">Foreword</h1>
-<p>ZIG: Zig Isn’t Gnu</p>
-<p>This book targets people who already have experience programming in other languages. Having experience in a systems programming language like C or Rust can help but having something like intermediate level in Python is enough to understand the book’s concepts.</p>
+<h1 id="preface">Preface</h1>
+<p>Today, computers are faster than ever. You can have a computer a thousand times more powerful than 1980s’ that fits in your pocket. Yet, instead of seeing a trend where all software get faster and nobody has to wait for a software to compute, processing time stalled. It even increased, Windows <del>10</del> 11 can take half a minute to start, much more than Windows 95 computers. It’s not like Windows 11 has a thousand times more features than Windows 95, yet it is much slower. Why ?</p>
+<p>The reality is simply a mix of laziness and deadlines to respect, why the heck would you bother optimizing your software from the get go? You’d just miss your deadline. After all, the saying goes that ‘premature optimization is the root of all evil’. And besides, if the customer is unhappy, can’t he pay a little more for making the software faster? Really, most customers got accustomed to slow software anyways.</p>
+<p>And that’s how software development split into two worlds: web technologies, faster to develop for, horrible performance, which is used my almost all applications we use today due to reasons said above. And native applications, notorious for being hard to grasp, slowing development, and requiring people competent in that domain, which is losing terrain more and more, except for the most performance-critical applications.</p>
+<p>There has been attempt for fast high-level languages, like Julia. But by removing access to actually controlling the computer, you lose opportunity to make your algorithms just run faster. Hence, the usage of C, C has been around since the 1970s and won’t disappear anytime soon, but C trusts the developer too much: no runtime safety, macros, which are the biggest advantage and disadvantage of C, weird undefined behaviour (signed overflow is defined, unsigned overflow isn’t :/) …</p>
+<p>Hence why I turned to the Zig programming language. It removes many footguns from C and introduces error sets, instead of exceptions and error codes. It introduces comptime, instead of magic values and additional compilation steps. Yet the language also feel simpler, because you don’t have to write in two languages (macros and C) and because some concepts naturally emerge from simpler mechanics, like generics that naturally come from comptime and types as values.</p>
+<p>Now, this book won’t teach you introductory programming knowledge, it assumes familiarity with concepts like variables, functions and loops. It will mostly teach you about Zig, obviously, but also about how memory works and what are allocators.</p>
 <p>Being that the book is still very early, <strong>if you have feedback, please tell me</strong> (you can send me a message on my Discord Zen1th#3854)</p>
 <p>Complementary (free) material you might also want to use to learn Zig:</p>
 <ul>
-<li><a href="https://ziglang.org/documentation/master/">The language reference</a> which is of an awesome quality</li>
-<li><a href="https://ziglearn.org">Ziglearn</a> bare introductions in bullet list style</li>
+<li><a href="https://ziglang.org/documentation/master/">The language reference</a> which is of great help</li>
+<li><a href="https://ziglearn.org">Ziglearn</a> with just bare introductions in bullet list style</li>
 <li><a href="https://github.com/ratfactor/ziglings">Ziglings</a>, like Rustlings but for Zig</li>
-<li><a href="https://github.com/ziglang/zig/tree/master/lib/std">Reading the standard library</a> because it is really well written and serves as an example for many concepts and conventions in Zig.</li>
+<li><a href="https://github.com/ziglang/zig/tree/master/lib/std">Reading the standard library</a> because it is well written and serves as an example for many concepts and conventions in Zig.</li>
 <li><a href="https://github.com/Mouvedia/zig-examples/blob/main/zig.html.markdown">Zig examples</a></li>
 <li><a href="https://zig-by-example.com/">Zig by example</a></li>
 </ul>
-<h1 id="zig-why">Zig, Why?</h1>
+<h2 id="zig-why">Zig, Why?</h2>
 <p>TODO</p>
 <p>The Road To Zig 1.0: <a href="https://www.youtube.com/watch?v=Gv2I7qTux7g">https://www.youtube.com/watch?v=Gv2I7qTux7g</a></p>
 <p>There is also the <a href="https://ziglang.org/documentation/master/#Zen">Zig’s Zen</a> which is a set of ideals for the language.</p>
@@ -221,8 +234,7 @@ Zig gotta go fast
 <ul>
 <li>Favor reading code over writing code.</li>
 </ul>
-<p>This manifests in more verbose syntax and things like <code>usingnamespace</code> not being like other languages <code>using namespace</code> (like in C++) in order to actually avoid those bad patterns that hurt readability by favoring writing code (for example, having <code>using namespace std;</code> is considered bad practice in C++). It also manifests in unused variables being errors, which can be sometimes feel irritating, sometimes feel wonderful as it uncovers a bug.<br />
-So if you’re coming to Zig, remember, favor reading code over writing code.</p>
+<p>This manifests in more verbose syntax and things like <code>usingnamespace</code> not being like other languages <code>using namespace</code> (like in C++) in order to actually avoid those bad patterns that hurt readability by favoring writing code (for example, having <code>using namespace std;</code> is considered bad practice in C++). It also manifests in unused variables being errors, which can be sometimes feel irritating, sometimes feel wonderful as it uncovers a bug. So if you’re coming to Zig, remember, favor reading code over writing code.</p>
 <h1 id="introduction">Introduction</h1>
 <h2 id="installing-zig">Installing Zig</h2>
 <p>The book targets <code>master</code> version (until 1.0 releases)</p>
@@ -265,11 +277,11 @@ So if you’re coming to Zig, remember, favor reading code over writing code.</p
 <p>We can see that the program compiles but does nothing. To print Hello World, we need to access the standard output. First, we need to import the standard library using <code>const std = @import("std");</code>. There, we declare a variable (<code>const std =</code>) containing the standard library <code>@import("std");</code> Then,</p>
 <p>From that, we can get <code>std.io.getStdOut().writer()</code> which allows to use the <strong>st</strong>an<strong>d</strong>ard <strong>out</strong>put, this time we can put it in the <code>main</code> function.</p>
 <p>A writer is how you write data to a given destination (like a file, a network stream, a terminal, …) in Zig. Similarly, a reader allows to read data from a given source.</p>
-<pre class="{"><code>const std = @import(&quot;std&quot;);
-
-pub fn main() void {
-    const stdout = std.io.getStdOut().writer();
-}</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="at">const</span> std = <span class="bu">@import</span>(<span class="st">&quot;std&quot;</span>);</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> main() <span class="dt">void</span> {</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    <span class="at">const</span> stdout = std.io.getStdOut().writer();</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>}</span></code></pre></div>
 <p>Then we can use the <code>print()</code> function that can be used to write text.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">pub</span> <span class="kw">fn</span> main() <span class="dt">void</span> {</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>    <span class="at">const</span> stdout = std.io.getStdOut().writer();</span>
@@ -394,7 +406,6 @@ Hello, World</code></pre>
 <p>Looking back at <a href="https://github.com/ziglang/zig/blob/master/lib/std/fmt.zig#L27">the standard library source code</a>, we see we can use <code>precision</code> to round our number. The change is as simple as using <code>{d:.1}</code> instead of <code>{d}</code>.</p>
 <p>Which rounds the number and gives us:</p>
 <pre><code>80°F is 26.7°C</code></pre>
-<p>We can now safely dive in!</p>
 <h1 id="loops">Loops</h1>
 <h2 id="while-loop">While loop</h2>
 <p>The <code>while</code> loop is very similar in Zig to other languages, it’s used this way:</p>
@@ -492,7 +503,8 @@ Hello, World</code></pre>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a><span class="cf">while</span> (i &lt; <span class="dv">10</span>) : (i += <span class="dv">1</span>) {</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>    std.debug.print(<span class="st">&quot;{}</span><span class="sc">\n</span><span class="st">&quot;</span>, .{ i });</span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Here, the instruction in parentheses after the while loop (<code>(i += 1)</code>) is executed at the end of each loop. # Functions</p>
+<p>Here, the instruction in parentheses after the while loop (<code>(i += 1)</code>) is executed at the end of each loop.</p>
+<h1 id="functions">Functions</h1>
 <p><strong>This chapter needs serious rewrite.</strong></p>
 <p>Now as you may know, it is often much better to break parts of the code that we’ll use often into functions.</p>
 <p>For this, we use the same syntax we used for our main function: here take our Fahrenheit to Celsius proram and turn the conversion into a function:</p>
@@ -505,13 +517,16 @@ Hello, World</code></pre>
 <div class="sourceCode" id="cb31"><pre class="sourceCode zig"><code class="sourceCode zig"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a><span class="at">const</span> celsius: <span class="dt">f32</span> = fahrenheitToCelsius(<span class="fl">80.0</span>);</span></code></pre></div>
 <p>As there is no Object prototypes or operator overloading, the only way something can call a function is with <code>theFunction()</code> syntax. This can help a lot in reading code by not having to keep the mental overhead of what is overloaded, what’s inherited by a class, what prototype is it.</p>
 <h2 id="error-handling-in-functions">Error handling in functions</h2>
-<p>error sets, <code>errdefer</code>, … … # Slices</p>
+<p>error sets, <code>errdefer</code>, … …</p>
+<h1 id="slices">Slices</h1>
 <p><strong>This chapter needs serious rewrite.</strong></p>
 <p>You may have noticed that Zig does have a syntax for arrays <code>[N]T</code> (where <code>N</code> is a number and <code>T</code> a type) like <code>[100]u32</code> for 100 integers.</p>
 <p>Cool, but real apps manipulate data that may have any size, right?</p>
 <p>In C and Zig, arrays are fixed size as they are represented just as a lot of variables. Meanwhile, slices are, like they name indicate, the slice of an array.</p>
 <pre><code>var array = [5]u8 { 1, 2, 3, 4, 5 };
 var slice = array[0..5];</code></pre>
+<h2 id="strings">Strings</h2>
+<p>Strings are just slices of <code>u8</code>. They’re usually encoded with UTF-8 but in theory nothing forces them to be.</p>
 <h1 id="the-zig-the-string-and-the-unicode">The Zig, the String, and the Unicode</h1>
 <p>Now, one concerning fact about Zig is that strings are plain slices of bytes, which means iterating over a string will actually iterate over bytes!</p>
 <p>Does Zig not have support for UTF-8 ?</p>

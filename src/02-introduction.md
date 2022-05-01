@@ -96,7 +96,7 @@ A writer is how you write data to a given destination (like a file, a network
 stream, a terminal, ...) in Zig. Similarly, a reader allows to read data from a
 given source.
 
-```{
+```zig
 const std = @import("std");
 
 pub fn main() void {
@@ -342,5 +342,3 @@ Which rounds the number and gives us:
 ```
 80°F is 26.7°C
 ```
-
-We can now safely dive in!
