@@ -1,2 +1,10 @@
 #!/bin/sh
-pandoc zig-book.md --template=template.html --highlight-style=tango --metadata date="Last edited on `date -u "+%y-%m-%d %H:%M:%S+00:00"`" --syntax-definition=zig.xml --toc -f markdown -t html -s -o index.html $@
+pandoc src/*.md \
+	--metadata-file=src/metadata.txt \
+	--template=template.html \
+	--highlight-style=tango \
+	--metadata date="Last edited on `date -u "+%y-%m-%d %H:%M:%S+00:00"`" \
+	--syntax-definition=zig.xml \
+	--toc \
+	-f markdown\
+	-t html -s -o dist/index.html $@
