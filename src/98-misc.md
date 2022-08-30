@@ -37,3 +37,4 @@ std.testing.expectEqual(Color.yellow, rect.color);
 This looks perfectly fine to run! Except not, we did a typo (`rect` instead of `rect2`) and the test will fail,
 Zig avoids this by making unused variables an error, it can feel like a pain, but it can save you from a lot of
 bugs like this.
+

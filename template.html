@@ -57,7 +57,19 @@ $endif$
 				font-weight: bold;
 			}
 
-			/*@media (prefers-color-scheme: dark) {
+
+            .zig-example {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100%;
+			}
+
+            .zig-example > pre {
+				min-width: 50vw;
+			}
+
+			@media (prefers-color-scheme: dark) {
 				body {
 					color: #bbbbbb;
 					background-color: #111111;
@@ -66,15 +78,19 @@ $endif$
 					color: #ffffff;
 				}
 				div.sourceCode, pre {
-					margin-left: 3em; /* put them apart more due to the higher contrast *
+					margin-left: 3em; /* put them apart more due to the higher contrast */
 					background-color: #ddd;
 					color: initial;
 				}
 				.box-information {
 					background-color: rgba(20, 20, 255, 0.5);
 				}
-			}*/
+			}
 		</style>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js" data-manual></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-css.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-zig.min.js"></script>
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-okaidia.min.css" rel="stylesheet" />
 $for(css)$
 		<link rel="stylesheet" href="$css$" />
 $endfor$
@@ -117,4 +133,39 @@ $for(include-after)$
 $include-after$
 $endfor$
 	</body>
+	<footer>
+		<script>
+			var setInnerHTML = function(elm, html) {
+				elm.innerHTML = html;
+				Array.from(elm.querySelectorAll("script")).forEach( oldScript => {
+					const newScript = document.createElement("script");
+					Array.from(oldScript.attributes)
+					.forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+					newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+					oldScript.parentNode.replaceChild(newScript, oldScript);
+				});
+			};
+			for (const elem of document.getElementsByClassName("zig-example")) {
+				const code = elem.innerText;
+				const b64 = btoa(code);
+				console.log("b64: "+ b64);
+
+				setInnerHTML(elem, `<pre><button>Run</button>&nbsp;<button>RESET</button>&nbsp;<button>EDIT</button><br/><br/><code class="language-zig"></code>
+				<script>
+					let playUrl = 'https://zig.run/play/base64/`+b64+`';
+					let editUrl = 'https://zig.run/snippet/#`+b64+`';
+					let children = Array.from(document.currentScript.parentElement.children); 
+					let code = children.find((e) => e.tagName == 'CODE');
+					let button = (label) => children.find((e) => e.tagName == 'BUTTON' && e.textContent == label); 
+					let output = (t) => new Promise((resolve) => { code.textContent = t; resolve(); console.log("new code: " + t); });
+					button('Run').onclick = () => output('Running...').then(fetch(playUrl).then(r => r.json()).then(t => output(t.stdout + '\\n----------\\n' + t.stderr)));
+					button('RESET').onclick = () => output(atob(editUrl.split('#')[1])).then(() => Prism && Prism.highlightElement(code));
+					button('EDIT').onclick = () => window.open(editUrl);
+					output(atob(editUrl.split('#')[1])).then(() => Prism && Prism.highlightElement(code));
+					console.log("hello world");
+				`+"<"+`/script>
+				</pre>`);
+			}
+		</script>
+	</footer>
 </html>

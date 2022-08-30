@@ -43,136 +43,39 @@ export PATH=$PATH:~/path/to/zig-folder
 
 ## Hello World
 
-In this chapter, our objective is to show \"Hello, World\" in the Zig
-programming language.
+In this chapter, our objective is to show 'Hello, World' in the Zig programming language.
 
 We can start by declaring the main() function, the *main* function which
-is run at the start of a Zig program.
+is run at the start of a Zig program.  
 
-```zig
-pub fn main() void {
-
-}
-```
-
-The syntax is quite simple, `fn main() void`. `void` shows the function
-returns nothing. Finally, `pub` is necessary for a function to be
-public, which means it can be used in other source files.
-
-And finally, what we will put between `{` and `}` will be the code of
-our function.
-
-Making `main()` public (using `pub`) is necessary because the Zig standard
-library, which is another source file will do *magic* in order to make your
-`main()` function works. And in order to do that, it needs to access your
-main function.
-
-<div class="box-information">
-Currently, the Zig compiler requires you to use spaces instead of tabs
-and Unix line return (LF). On most editors, you can configure this in
-the status bar (near the lower right-hand corner). If you use Notepad,
-you can get a new editor like Notepad++ or Visual Studio Code, those are
-free.
-</div>
-
-To see if this works, we must save this in a file, that could be named `hello.zig`.
-Then we compile and run it using the `zig` command like the following:
-
-```
-$ zig run hello.zig
-```
-
-We can see that the program compiles but does nothing.
-To print Hello World, we need to access the standard
-output. First, we need to import the standard library using
-`const std = @import("std");`. There, we declare a variable
-(`const std = `) containing the standard library `@import("std");` Then,
-
-From that, we can get `std.io.getStdOut().writer()` which allows
-to use the **st**an**d**ard **out**put, this time we can put it in the
-`main` function.
-
-A writer is how you write data to a given destination (like a file, a network
-stream, a terminal, ...) in Zig. Similarly, a reader allows to read data from a
-given source.
-
+In Zig, the program to print 'Hello, World' is 
 ```zig
 const std = @import("std");
 
 pub fn main() void {
-    const stdout = std.io.getStdOut().writer();
+    std.debug.print("Hello, World\n", .{});
 }
 ```
 
-Then we can use the `print()` function that can be used to write text.
+Using the editor of your choice, write the above program in it and save it
+to a file that ends in `.zig`, like `hello.zig`
 
-```zig
-pub fn main() void {
-    const stdout = std.io.getStdOut().writer();
-    writer.print("Hello, World\n", .{});
-}
+In a new window, open a terminal (`cmd.exe` on Windows) then, compile and run it with this command
+```
+zig run hello.zig
+```
+the command then prints
+```
+hello world
 ```
 
-Note that `\n` is a line return, adding it is necessary so that we can write another line after it.
+On the first line `const std = @import("std")` imports the standard library (std) and puts its definitions in the constant `std`.
 
-Now you can try to compile the program, but we get.. an error!
+`pub fn main() void` defines a public function called `main` which takes no arguments (nothing between `()`) and returns nothing `void`.
 
-```
-$ zig run hello.zig
-./hello.zig:5:17: error: error is ignored. consider using `try`, `catch`, or `if`
-stdout.print("Hello, World\n", .{});
-```
-
-This informs us that `print` may return an error and that we cannot
-ignore it. That is because in Zig, errors are just values, the only
-difference is, special handling for it was made in the language to
-make it easier to handle them.
-
-We can use `catch` to manually handle the error, for example, to print an
-error message without stopping the whole program, but here we'll just stop
-the program and return the error to the caller.
-
-```zig
-stdout.print("Hello World\n", .{}) catch |err| return err;
-```
-
-The `try` keyword allows us to shorten this into
-
-```zig
-try stdout.print("Hello World\n", .{});
-```
-
-We try to compile and we get..
-
-```
-$ zig run hello.zig
-./hello.zig:5:5: error: expected type 'void', found 'std.os.WriteError'
-try stdout.print("Hello, World\n", .{});
-    ^
-./hello.zig:3:15: note: function cannot return an error
-pub fn main() void {
-              ^
-```
-
-The note helps us here:
-we need to declare that the function can return an error. For this, we
-can use the `!void` syntax which handles this for us. Finally, we have
-
-```zig
-const std = @import("std");
-
-pub fn main() !void {
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("Hello, World\n", .{});
-}
-```
-
-```
-$ zig run hello.zig
-Hello, World
-```
-
-The program now prints `Hello, World`.
+And finally, what we will put between `{` and `}` will be the code of our function.
+Our `main` function only has one statement: `std.debug.print("Hello, World", .{});`.
+This statement tells the computer to call the function `print`, from `debug`, from `std` (the constant we imported).
 
 # A deeper introduction
 
@@ -255,16 +158,16 @@ And then `(fahrenheit - 32) / 1.8` does the operation we described above.
 
 The only thing left is printing the resulting value.
 
-```zig
-const std = @import("std");
+<div class="zig-example">
+    const std = @import("std");
 
-pub fn main() !void {
-    const fahrenheit: f64 = 80; 
-    const celsius: f64 = (fahrenheit - 32) / 1.8;
+    pub fn main() !void {
+        const fahrenheit: f64 = 80; 
+        const celsius: f64 = (fahrenheit - 32) / 1.8;
 
-    std.debug.print("{}°F is {}°C", .{ fahrenheit, celsius });
-}
-```
+        std.debug.print("{}°F is {}°C", .{ fahrenheit, celsius });
+    }
+</div>
 
 Using `std.debug.print` here is much shorter than using `std.io.getStdOut()`,
 it also assumes we don't care if we can't show our text and will not error in

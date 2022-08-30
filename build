@@ -6,5 +6,5 @@ pandoc src/*.md \
 	--metadata date="Last edited on `date -u "+%y-%m-%d %H:%M:%S+00:00"`" \
 	--syntax-definition=zig.xml \
 	--toc \
-	-f markdown\
+	-f markdown+smart\
 	-t html -s -o dist/index.html $@
